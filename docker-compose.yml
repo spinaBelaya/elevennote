@@ -1,0 +1,31 @@
+version: '3'
+services:
+    nginx:
+        image: nginx:latest
+        container_name: ng01
+        ports:
+            - "8000:8000" #связь запроса локальной сети и докера 
+        volumes:
+            - ./deploy/nginx:/etc/nginx/conf.d #в папке ./deploy/nginx есть конфиг, который нужно поместить в папку /etc/nginx/conf.d в докере 
+            - ./static:/static
+        depends_on:
+            - web 
+    web:
+        build: .
+        container_name: dg01
+        command: bash -c "sleep 5 && python manage.py makemigrations && python manage.py migrate && uwsgi --ini /usr/local/etc/elevennote.ini" #команда при запуске контейнера 
+        depends_on:
+            - db #значит web не может начать работу пока не инициилизируется бд(и спим 5 сек,чтоб бд успела это сделать)
+        volumes:
+            - ./src:/src
+            - ./deploy/uwsgi:/usr/local/etc/
+            - ./static:/static
+        expose:
+            - "8000"
+    db: #DB_HOST
+        image: postgres:latest
+        container_name: ps01  #почитать про пароль на docker hub
+        
+# шоб удалить контейнеры docker rm CONTAINER_ID     или docker ps -a
+# шоб добавить автоматически удаление docker-compose run --rm
+
